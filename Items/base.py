@@ -56,14 +56,14 @@ class Food(Item):
         super().__init__(id)
         self.type = "food"
         self.base_price = 20
-        self.nutrition = 500
+        self.saturation = 500
         self.water = 0
         self.durability = 1
         self.already_known = True
 
     def use_item(self, data, player):
         player.water += self.water
-        player.nutrition += self.nutrition
+        player.saturation += self.saturation
 
     @staticmethod
     def get_base_price():
@@ -75,14 +75,14 @@ class Drink(Item):
         super().__init__(id)
         self.type = "drink"
         self.base_price = 5
-        self.nutrition = 0
+        self.saturation = 0
         self.water = 100
         self.durability = 1
         self.already_known = True
 
     def use_item(self, data, player):
         player.water += self.water
-        player.nutrition += self.nutrition
+        player.saturation += self.saturation
 
     @staticmethod
     def get_base_price():

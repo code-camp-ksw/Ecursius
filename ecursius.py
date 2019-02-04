@@ -195,7 +195,7 @@ class Game(tk.Frame):
     def draw_stats(self):
         new_text = "~" * 95
         new_text += "\n"
-        new_text += "health: {}/{}\tgold: {}".format(self.data.player.hp, self.data.player.max_hp, self.data.player.gold)
+        new_text += "health: {}/{}\tgold: {}\t{}".format(self.data.player.hp, self.data.player.max_hp, self.data.player.gold, ", ".join(self.data.player.statuslist))
         new_text += "\n"
         new_text += "score: {}\tlevel: {}\tdeepest level: {}".format(
             self.data.score, self.data.level, self.data.maxLevel)
@@ -225,6 +225,7 @@ class Game(tk.Frame):
         self.bind_all("<KeyPress>", func=self.input_handler)
         self.data.reset_inventory()
         self.data.generate_map()
+        self.data.player.reset_stats()
         self.entity_automove()
         self.label.configure(bg="#eaeaea", text="Press any button to start. \"h\" will give you help. ")
         self.draw()
@@ -351,6 +352,9 @@ class Game(tk.Frame):
             for i in self.data.ents:
                 if i.playerMove:
                     i.move(self.data)
+
+        self.data.player.saturation -= 1
+        self.data.player.water -= 1
 
         self.label.configure(text=self.labeltext)
         self.draw()
@@ -547,8 +551,9 @@ class Player:
         self.invulnerable = False
         self.prevPos = []
         self.gold = 0
-        self.nutrition = 0
+        self.saturation = 0
         self.water = 0
+        self.statuslist = []
 
     def set_position(self, posy, posx):
         self.pos = [int(posy), int(posx)]
@@ -558,10 +563,11 @@ class Player:
             self.hp -= damage
 
     def reset_stats(self):
-        self.nutrition = 1000
-        self.water = 100
+        self.saturation = 5000
+        self.water = 1000
 
     def move(self, direction, data):
+        self.statuslist = []
         self.prevPos = self.pos[:]
         possible = False
 
@@ -586,6 +592,27 @@ class Player:
 
         if not data.position_in_world(self.pos) and not possible:
             self.pos = self.prevPos[:]
+
+        if 0 < self.water < 400:
+            self.statuslist.append("Thirsty")
+        elif self.water <= 0:
+            if self.water < data.level * 20:
+                self.statuslist.append("Dehydrated")
+                self.hp = 0
+            else:
+                self.statuslist.append("Dehydrating")
+
+        if self.saturation > 10000:
+            self.statuslist.append("Saturated")
+        elif 200 < self.saturation < 2000:
+            self.statuslist.append("Hungry")
+        elif 0 < self.saturation <= 750:
+            self.statuslist.append("Weak")
+        elif self.saturation <= 0:
+            if self.saturation < data.level * 50:
+                self.statuslist.append("Biting dust")
+            else:
+                self.statuslist.append("Fainting")
 
     def attack(self, direction, data):
         if direction == [0, 0] and data.itemList != []:

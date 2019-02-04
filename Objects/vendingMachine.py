@@ -10,6 +10,7 @@ class VendingMachine(base.Object):
         self.recipe = []
         self.set_recipe(data)
         self.random_position(data, 4)
+        self.free_objects = random.randint(0, 3)
 
     def set_variant(self):
         self.variant = random.choice(["snacks", "drinks"])
@@ -32,7 +33,14 @@ class VendingMachine(base.Object):
             self.set_recipe(app.data)
         else:
             app.data.player.gold = 0
-            app.labeltext += "The vending machine took all your gold. "
+            if random.randint(0, 99) > 95 and self.free_objects > 0:  # 1:25
+                self.free_objects -= 1
+                app.labeltext += "The vending machine shakes..."
+                app.data.groundItems.append(self.recipe[0])
+                app.data.groundItems[len(app.data.groundItems) - 1].set_position(self.pos[0], self.pos[1])
+                self.set_recipe(app.data)
+            else:
+                app.labeltext += "The vending machine took all your gold. "
 
     def onPlayerMovesOnMe(self, app):
         pass

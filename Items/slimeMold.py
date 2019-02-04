@@ -6,7 +6,7 @@ class SlimeMold(base.Food):
         super().__init__(data, "slime_mold")
         self.name = "Slime mold"
         self.base_price = 20
-        self.nutrition = 1000
+        self.saturation = 1000
 
 
 
