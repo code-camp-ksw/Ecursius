@@ -1,0 +1,10 @@
+DEBUG:root:/home/timon/02-Python/3.6/Ecursius 2.0/ecursius.py
+DEBUG:PIL.PngImagePlugin:STREAM b'IHDR' 16 13
+DEBUG:PIL.PngImagePlugin:STREAM b'bKGD' 41 6
+DEBUG:PIL.PngImagePlugin:b'bKGD' 41 6 (unknown)
+DEBUG:PIL.PngImagePlugin:STREAM b'pHYs' 59 9
+DEBUG:PIL.PngImagePlugin:STREAM b'tIME' 80 7
+DEBUG:PIL.PngImagePlugin:b'tIME' 80 7 (unknown)
+DEBUG:PIL.PngImagePlugin:STREAM b'iTXt' 99 29
+DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 140 3117
+DEBUG:root:[19, 26]
