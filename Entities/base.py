@@ -1,7 +1,7 @@
 import random
 
 
-class Entity():
+class Entity:
     def __init__(self, char, health, name):
         self.name = name
         self.pos = []
@@ -17,6 +17,7 @@ class Entity():
         self.ticks_until_turn = 100
         self.ticks_remaining = self.ticks_until_turn
         self.movetime = 1
+        self.color_tag = None
 
     def set_position(self, y, x):
         self.pos = [int(y), int(x)]
@@ -42,6 +43,14 @@ class Entity():
         self.ticks_until_turn = time
         if not no_reset:
             self.ticks_remaining = time
+
+    @staticmethod
+    def get_probability(data):
+        return 1
+
+    @staticmethod
+    def get_color_tag():  # override with tuple (tagName, color)
+        return None
 
 
 def copyList(list1, list2):

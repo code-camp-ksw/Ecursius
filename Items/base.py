@@ -15,6 +15,7 @@ class Item:
         self.identified = False
         self.base_price = 100
         self.already_known = False
+        self.color_tag = None
 
     def set_position(self, y, x):
         self.pos = [int(y), int(x)]
@@ -46,6 +47,10 @@ class Item:
     @staticmethod
     def get_probability(data):
         return 1
+
+    @staticmethod
+    def get_color_tag():  # override with tuple (tagName, color)
+        return None
 
     def chr(self):
         return self.char

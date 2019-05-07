@@ -1,11 +1,19 @@
 from . import sword, telepotion, pickaxe, healthpotion, gold, poison, greater_health_potion, waterbottle, slimeMold
 
+item_list = [sword.Sword, telepotion.TelePotion, pickaxe.Pickaxe, healthpotion.HealthPotion, gold.Gold,
+             poison.PoisonPotion, greater_health_potion.GreaterHealthPotion, waterbottle.WaterBottle,
+             slimeMold.SlimeMold]
 
-class Items():
+
+class Items:
     def __init__(self, data):
         self.data = data
         self.ItemList = []
         self.possibilities = 2
+
+        for i in item_list:
+            if i.get_color_tag() is not None:
+                data.tagRegistry.add(i.get_color_tag()[0], i.get_color_tag()[1])
 
     def appendToItemlist(self, object, count):
         for i in range(count):

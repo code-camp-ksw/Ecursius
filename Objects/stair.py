@@ -12,10 +12,10 @@ class Stair(base.Object):
     def setVariant(self):
         self.variant = random.choice(["up", "down", "up"])
         if self.variant == "up":
-            self.chr = "↗"
+            self.char = "↗"
             self.name = "a stair going up"
         else:
-            self.chr = "↘"
+            self.char = "↘"
             self.name = "a stair going down"
 
     def onPlayerMovesOnMe(self, app):

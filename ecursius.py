@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import tkinter as tk
+from tkinter import font
 import os
 import logging
 import random
@@ -17,8 +18,7 @@ class Window(tk.Tk):
         self.game = Game(master=self)
         self.menu = Menu(master=self)
         self.settings = Settings(master=self)
-        self.help = Help(master=self)
-        self.help.withdraw()
+        self.help = None
         self.menu.pack()
         self.bind_all("<Control-KeyPress-q>", self.quit_event)
 
@@ -32,19 +32,27 @@ class Window(tk.Tk):
 
     def open_settings(self):
         self.menu.pack_forget()
+        self.pack_propagate(0)
         self.settings.pack()
+
+    def open_help(self):
+        if self.help is None:
+            self.help = Help(master=self)
+        else:
+            self.help.lift()
 
 
 class Help(tk.Toplevel):
     def __init__(self, master=None):
         super().__init__(master)
         self.mode = tk.Menu(self, relief=tk.FLAT)
-        self.mode.add_command(label="hide", command=self.withdraw)
+        # self.mode.add_command(label="hide", command=self.withdraw)
         self.mode.add_command(label="Buttons", command=self.show_button_text)
         self.config(menu=self.mode)
         self.text = tk.Label(self, width=40, anchor=tk.NW, justify=tk.LEFT, bg="#efefef")
         self.text.grid(row=2, column=0)
         self.show_button_text()
+        self.protocol("WM_DELETE_WINDOW", self.on_close)
 
     def show_button_text(self):
         self.text.configure(text="""    uio\tkeypad to move/attack
@@ -53,14 +61,20 @@ class Help(tk.Toplevel):
     >\tmove up stair (↗)
     <\tmove down stair (↘)
     
-    ↓\tmove selection down
-    ↑\tmove selection up
-    ←\tswitch inventory side / move selection
-    →\tswitch inventory side / move selection
+    s\tmove selection down
+    w\tmove selection up
+    a\tswitch inventory side / move selection
+    d\tswitch inventory side / move selection
     z\topen/close inventory
     -\tdrop selected item
     n\tpick up Item
+    I\tinteract
     """)
+
+    def on_close(self):
+        self.master.help = None
+        print(self.master.help)
+        self.destroy()
 
 
 class Settings(tk.Frame):
@@ -73,6 +87,7 @@ class Settings(tk.Frame):
 
     def exit_to_menu(self):
         self.pack_forget()
+        self.master.pack_propagate(1)
         self.master.menu.pack()
 
     def toggle_numpad(self):
@@ -98,8 +113,10 @@ class Menu(tk.Frame):
         self.start_button.grid(row=0, column=1, pady=(150, 10))
         self.settings_button = tk.Button(self, text="Settings", command=master.open_settings, anchor=tk.CENTER, relief=tk.FLAT)
         self.settings_button.grid(row=1, column=1, pady=(10, 10))
+        self.help_button = tk.Button(self, text="Help", command=master.open_help, anchor=tk.CENTER, relief=tk.FLAT)
+        self.help_button.grid(row=2, column=1, pady=(10, 10))
         self.quit_button = tk.Button(self, text="Quit", command=self.quit, anchor=tk.CENTER, relief=tk.FLAT)
-        self.quit_button.grid(row=2, column=1, pady=(10, 10))
+        self.quit_button.grid(row=3, column=1, pady=(10, 10))
 
 
 class Game(tk.Frame):
@@ -108,12 +125,14 @@ class Game(tk.Frame):
         self.running = False
         self.master.title("Ecursius")
         self.master.configure(bg="#eaeaea")
-        self.game_text = tk.StringVar()
-        self.field = tk.Label(self, width=60, height=30, bg="#eaeaea", font="TkFixedFont", textvariable=self.game_text)
+        self.map_font = font.Font(family="Bitstream Vera Sans Mono", size=11)
+        self.map = tk.Text(self, width=60, height=30, bg="#eaeaea", font=self.map_font, relief=tk.FLAT)
+        # self.map = tk.Canvas(self, width=760, height=512, bg="#eaeaea")
+        self.fields = []
         self.expire_turns = 1
         self.itemscore = tk.Label(self, height=30, width=35, bg="#eaeaea", anchor=tk.NW, justify=tk.LEFT)
         self.stats = tk.Label(self, height=3, bg="#eaeaea")
-        self.label = tk.Label(self, height=5, bg="#eaeaea")
+        self.label = tk.Label(self, height=5, bg="#eaeaea", width=130)
         self.separator = tk.Label(self, height=30, text="", bg="#eaeaea")
 
         t = "|"
@@ -121,7 +140,7 @@ class Game(tk.Frame):
             t += "\n|"
         self.separator.configure(text=t)
 
-        self.field.grid(row=1, column=0)
+        self.map.grid(row=1, column=0)
         self.separator.grid(row=1, column=1)
         self.itemscore.grid(row=1, column=2)
         self.stats.grid(row=2, column=0, columnspan=3)
@@ -129,6 +148,8 @@ class Game(tk.Frame):
 
         self.labeltext = ""
         self.data = GameDataHolder()
+
+        self.data.tagRegistry.update(self.map)
 
     def exit_to_menu(self, e):
         self.pack_forget()
@@ -169,25 +190,30 @@ class Game(tk.Frame):
                 line.append(j)
             screen.append(line)
 
-        for i in self.data.doorList:
-            screen[i.pos[0]][i.pos[1]] = i.chr
-
-        for i in self.data.staticObjects:
-            screen[i.pos[0]][i.pos[1]] = i.chr
-
         for i in self.data.groundItems:
             screen[i.pos[0]][i.pos[1]] = i.chr()
+
+        for i in self.data.staticObjects:
+            screen[i.pos[0]][i.pos[1]] = i.chr()
+
         for i in self.data.ents:
-            if not i.draw_in_back:
-                if screen[i.pos[0]][i.pos[1]] == " ":
-                    screen[i.pos[0]][i.pos[1]] = i.chr()
-            else:
+            if (i.draw_in_back and screen[i.pos[0]][i.pos[1]] == " ") or not i.draw_in_back:
                 screen[i.pos[0]][i.pos[1]] = i.chr()
 
         screen[self.data.player.pos[0]][self.data.player.pos[1]] = "@"
+
         for i in range(len(screen)):
             screen[i] = "".join(screen[i])
-        self.game_text.set("\n".join(screen))
+
+        self.map.delete("@0,0", tk.END)  # everything
+        self.map.insert("@0,0", "\n".join(screen))  # redraw
+
+
+        self.map.tag_add("green", "{}.{}".format(self.data.player.pos[0] + 1, self.data.player.pos[1]))
+
+        for i in self.data.groundItems:
+            if i.color_tag is not None:
+                self.map.tag_add(i.color_tag, "{}.{}".format(i.pos[0] + 1, i.pos[1]))
 
         self.draw_stats()
         self.draw_itemscore()
@@ -234,6 +260,7 @@ class Game(tk.Frame):
         self.running = False
         self.unbind_all("<KeyPress>")
         self.bind_all("<KeyPress-q>", func=self.exit_to_menu)
+        self.label.configure(bg="#dd0000")
 
     def input_handler(self, event):
         self.running = True
@@ -248,10 +275,10 @@ class Game(tk.Frame):
             self.data.player.invulnerable = False
 
         if event.keysym == "h":
-            self.master.help.deiconify()
+            self.master.open_help()
 
         elif event.keysym == "q":
-            self.labeltext += "Game Over! "
+            self.labeltext += "Game Over! Press q to return to menu."
             logging.info("Player pressed q")
             self.finish()
 
@@ -333,16 +360,12 @@ class Game(tk.Frame):
                     self.labeltext += "You see here: "
                 self.labeltext += i.name + ", "
 
-        for i in self.data.doorList:
-            if i.pos == self.data.player.pos:
-                i.onPlayerMovesOnMe(self)
-
         for i in self.data.staticObjects:
             if self.data.player.pos == i.pos:
                 i.onPlayerMovesOnMe(self)
                 if i.id == "stair" and ((i.variant == "down" and event.keysym == "greater") or (i.variant == "up" and event.keysym == "less")):
                     i.on_player_walks_me(self)
-                else:
+                elif i.messages:
                     if "You see here: " not in self.labeltext:
                         self.labeltext += "You see here: "
                     self.labeltext += i.get_label_text()
@@ -378,6 +401,7 @@ class GameDataHolder:
         self.groundItems = []
         self.ents = []
 
+        self.tagRegistry = TagRegistry(self)
         self.entRegistry = None
         self.itemRegistry = None
         self.objectRegistry = None
@@ -392,8 +416,9 @@ class GameDataHolder:
         self.move = 0
 
         self.player = Player()
+        self.tagRegistry.add("green", "#008800")
+
         self.staticObjects = []
-        self.doorList = []
 
         self.registry_setup()
 
@@ -455,7 +480,6 @@ class GameDataHolder:
                 self.groundItems.remove(i)
 
     def static_object_creation(self):
-        self.staticObjects = []
         objectlist = self.objectRegistry.getObjects()
         for i in range(random.randint(0, self.objectRegistry.possibilities)):
             o = objectlist.pop(random.randint(0, len(objectlist) - 1))
@@ -466,11 +490,13 @@ class GameDataHolder:
     def generate_map(self):
         self.game = []
 
-        self.doorList = []
         self.rooms = []
+
         for i in range(random.randint(1, 3)):
             self.rooms.append(Room(
                 [random.randint(2, 20), random.randint(2, 55)]))
+
+        self.staticObjects = []
 
         for y in range(30):
             line = []
@@ -480,14 +506,13 @@ class GameDataHolder:
                     if random.randint(0, 100) > 97:
                         d = door.Door([y, x])
                         d.side = s
-                        self.doorList.append(d)
+                        self.staticObjects.append(d)
                     line.append("#")
                 else:
                     line.append(" ")
             self.game.append(line)
 
         self.entity_creation()
-        self.static_object_creation()
         self.player.random_position_next_wall(self)
 
     def position_in_world(self, pos):
@@ -507,6 +532,22 @@ class GameDataHolder:
             if j is not None and not position_in_room:
                 r = j
         return r
+
+
+class TagRegistry:
+    def __init__(self, data):
+        self.colors = {}
+        self.updated_tags = []
+
+    def add(self, tag, color):
+        if tag not in self.colors.keys():
+            self.colors[tag] = color
+
+    def update(self, map):
+        for i in self.colors.keys():
+            if i not in self.updated_tags:
+                map.tag_config(i, foreground=self.colors[i])
+                self.updated_tags.append(i)
 
 
 class Room:
@@ -569,7 +610,7 @@ class Player:
     def move(self, direction, data):
         self.statuslist = []
         self.prevPos = self.pos[:]
-        possible = False
+        ignore_walls = False
 
         self.pos[0] += direction[0]
         self.pos[1] += direction[1]
@@ -586,11 +627,11 @@ class Player:
                 if data.itemList != [] and data.itemList[data.selItem].type in "sword":
                     self.attack(direction, data)
 
-        for i in data.doorList:
-            if i.pos == self.pos:
-                possible = True
+        for i in data.staticObjects:
+            if i.pos == self.pos and i.walkable:
+                ignore_walls = True
 
-        if not data.position_in_world(self.pos) and not possible:
+        if not data.position_in_world(self.pos) and not ignore_walls:
             self.pos = self.prevPos[:]
 
         if 0 < self.water < 400:
@@ -670,7 +711,7 @@ class Player:
             if s is not None:
                 d = door.Door([doorpos[0], pos[1]])
                 d.side = s
-                data.doorList.append(d)
+                data.staticObjects.append(d)
 
                 self.set_position(player_position[0], player_position[1])
 

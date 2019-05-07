@@ -5,9 +5,11 @@ class Object:
     def __init__(self, id, chr):
         self.id = id
         self.pos = []
-        self.chr = chr
+        self.char = chr
         self.walkable = True
         self.name = ""
+        self.messages = True
+        self.color_tag = None
 
     def set_position(self, posy, posx):
         self.pos = [int(posy), int(posx)]
@@ -30,4 +32,11 @@ class Object:
 
     def use(self, app):
         pass
+
+    def chr(self):
+        return self.char
+
+    @staticmethod
+    def get_color_tag():  # override with tuple (tagName, color)
+        return None
 

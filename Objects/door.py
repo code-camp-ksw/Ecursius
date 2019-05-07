@@ -6,6 +6,7 @@ class Door(base.Object):
         super().__init__("door", "O")
         self.set_position(pos[0], pos[1])
         self.side = None  # "upper", "lower", "left", "right"
+        self.messages = False
 
     def onPlayerMovesOnMe(self, app):
         app.data.score += 1
