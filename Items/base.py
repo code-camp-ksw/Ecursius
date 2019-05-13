@@ -70,6 +70,11 @@ class Food(Item):
         player.water += self.water
         player.saturation += self.saturation
 
+        if self.durability == 0:
+            del data.itemList[data.selItem]
+            if data.selItem != 0:
+                data.selItem -= 1
+
     @staticmethod
     def get_base_price():
         return 20
@@ -88,6 +93,11 @@ class Drink(Item):
     def use_item(self, data, player):
         player.water += self.water
         player.saturation += self.saturation
+
+        if self.durability == 0:
+            del data.itemList[data.selItem]
+            if data.selItem != 0:
+                data.selItem -= 1
 
     @staticmethod
     def get_base_price():

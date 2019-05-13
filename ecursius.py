@@ -126,7 +126,7 @@ class Game(tk.Frame):
         self.master.title("Ecursius")
         self.master.configure(bg="#eaeaea")
         self.map_font = font.Font(family="Bitstream Vera Sans Mono", size=11)
-        self.map = tk.Text(self, width=60, height=30, bg="#eaeaea", font=self.map_font, relief=tk.FLAT)
+        self.map = tk.Text(self, width=60, height=30, bg="#eaeaea", font="TkFixedFont", relief=tk.FLAT)
         # self.map = tk.Canvas(self, width=760, height=512, bg="#eaeaea")
         self.fields = []
         self.expire_turns = 1
