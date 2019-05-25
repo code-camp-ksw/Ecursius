@@ -11,7 +11,7 @@ class Entity:
         self.collide = True
         self.canMove = True
         self.requiresPostProcesses = False
-        self.draw_in_back = True
+        self.draw_in_back = False
         self.autoMove = False
         self.playerMove = False
         self.ticks_until_turn = 100

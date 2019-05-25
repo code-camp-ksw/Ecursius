@@ -14,6 +14,7 @@ class GreaterHealthPotion(base.Item):
         self.set_name(data)
 
     def use_item(self, data, player):
+        player.max_hp += self.strength // 3
         player.hp += self.strength
         if player.hp > player.max_hp:
             player.hp = player.max_hp

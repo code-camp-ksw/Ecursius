@@ -15,27 +15,18 @@ def normal_moving_direction(my_position, position_to_attack, data, failed=False)
                 return [distance[0] / abs(distance[0]), 0]
             else:
                 return [0, distance[1] / abs(distance[1])]
-
-
-def normalMoveDir(my_position, entPos, data, failed=False):
-    distance = [entPos[0] - my_position[0], entPos[1] - my_position[1]]
-    if distance != [0, 0]:
-        if math.fabs(distance[0]) >= math.fabs(distance[1]):
-            return [distance[0] / int(math.fabs(distance[0])), 0]
-        else:
-            return [0, distance[1] / int(math.fabs(distance[1]))]
     else:
         return [0, 0]
 
 
-def moveToNearestOfList(my_position, objects, data):
+def move_to_nearest_of_list(my_position, objects, data):
     nearest = None
     for i in objects:
         if nearest is None or calc_distance(my_position, nearest.pos) > calc_distance(my_position, i.pos):
             nearest = i
 
     if nearest is not None:
-        return normalMoveDir(my_position, nearest.pos, data)
+        return normal_moving_direction(my_position, nearest.pos, data)
     else:
         return [0, 0]
 

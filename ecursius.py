@@ -135,6 +135,8 @@ class Game(tk.Frame):
         self.label = tk.Label(self, height=5, bg="#eaeaea", width=130)
         self.separator = tk.Label(self, height=30, text="", bg="#eaeaea")
 
+        self.needs_second_input = None
+
         t = "|"
         for i in range(29):
             t += "\n|"
@@ -205,15 +207,18 @@ class Game(tk.Frame):
         for i in range(len(screen)):
             screen[i] = "".join(screen[i])
 
+        self.map["state"] = tk.NORMAL
+
         self.map.delete("@0,0", tk.END)  # everything
         self.map.insert("@0,0", "\n".join(screen))  # redraw
-
 
         self.map.tag_add("green", "{}.{}".format(self.data.player.pos[0] + 1, self.data.player.pos[1]))
 
         for i in self.data.groundItems:
             if i.color_tag is not None:
                 self.map.tag_add(i.color_tag, "{}.{}".format(i.pos[0] + 1, i.pos[1]))
+
+        self.map["state"] = tk.DISABLED
 
         self.draw_stats()
         self.draw_itemscore()
@@ -268,89 +273,114 @@ class Game(tk.Frame):
         self.data.no_move = False
         self.labeltext = ""
 
-        if self.expire_turns == 0:
-            self.write_to_label(" ")
+        if self.needs_second_input is None:
+            if self.expire_turns == 0:
+                self.write_to_label(" ")
 
-        if self.data.player.invulnerable:
-            self.data.player.invulnerable = False
+            if event.keysym == "h":
+                self.master.open_help()
 
-        if event.keysym == "h":
-            self.master.open_help()
+            elif event.keysym == "q":
+                self.labeltext += "Game Over! Press q to return to menu."
+                logging.info("Player pressed q")
+                self.finish()
 
-        elif event.keysym == "q":
-            self.labeltext += "Game Over! Press q to return to menu."
-            logging.info("Player pressed q")
-            self.finish()
+            elif event.keysym == "w":
+                self.data.selItem -= 1
+                if self.data.selItem < 0:
+                    self.data.selItem = len(self.data.itemList) - 1
 
-        elif event.keysym == "w":
-            self.data.selItem -= 1
-            if self.data.selItem < 0:
-                self.data.selItem = len(self.data.itemList) - 1
+            elif event.keysym == "s":
+                self.data.selItem += 1
+                if self.data.selItem > len(self.data.itemList) - 1:
+                    self.data.selItem = 0
 
-        elif event.keysym == "s":
-            self.data.selItem += 1
-            if self.data.selItem > len(self.data.itemList) - 1:
-                self.data.selItem = 0
+            elif event.keysym == "a":
+                self.data.inventorySide -= 1
+                if self.data.inventorySide < 0:
+                    self.data.inventorySide = self.data.get_needed_inv_sides() - 1
 
-        elif event.keysym == "a":
-            self.data.inventorySide -= 1
-            if self.data.inventorySide < 0:
-                self.data.inventorySide = self.data.get_needed_inv_sides() - 1
+            elif event.keysym == "d":
+                self.data.inventorySide += 1
+                if self.data.inventorySide >= self.data.get_needed_inv_sides():
+                    self.data.inventorySide = 0
 
-        elif event.keysym == "d":
-            self.data.inventorySide += 1
-            if self.data.inventorySide >= self.data.get_needed_inv_sides():
-                self.data.inventorySide = 0
+            elif event.keysym == "minus":
+                if self.data.itemList:
+                    self.data.itemList[self.data.selItem].drop(self.data)
 
-        elif event.keysym == "minus":
-            if self.data.itemList:
-                self.data.itemList[self.data.selItem].drop(self.data)
+            elif event.keysym == "f":
+                self.data.generate_map()
+                self.data.player.random_position(self.data)
+                logging.info("generating new game, ")
 
-        elif event.keysym == "f":
-            self.data.generate_map()
-            self.data.player.random_position(self.data)
-            logging.info("generating new game, ")
-
-        elif event.keysym == "z":
-            if self.data.showInventory:
-                self.data.showInventory = False
-            else:
-                self.data.showInventory = True
-
-        elif event.keysym == "n":
-            for i in self.data.groundItems:
-                if i.pos == self.data.player.pos:
-                    i.pickup(self.data)
-
-        elif event.keysym == "F1":
-            if self.data.numpadmode:
-                self.data.numpadmode = False
-            else:
-                self.data.numpadmode = True
-
-        elif event.keysym_num == 73:  # I
-            for i in self.data.staticObjects:
-                if i.pos == self.data.player.pos:
-                    i.use(self)
-
-        for i in range(0, 3):
-            for j in range(0, 3):
-                if self.data.numpadmode:
-                    if event.keysym == self.data.numpad[i][j]:
-                        self.data.player.move([i - 1, j - 1], self.data)
+            elif event.keysym == "z":
+                if self.data.showInventory:
+                    self.data.showInventory = False
                 else:
-                    if event.keysym == self.data.keypad[i][j] and event.state == 0x0000:
-                        self.data.player.move([i - 1, j - 1], self.data)
+                    self.data.showInventory = True
+
+            elif event.keysym == "n":
+                for i in self.data.groundItems:
+                    if i.pos == self.data.player.pos:
+                        i.pickup(self.data)
+
+            elif event.keysym == "F1":
+                if self.data.numpadmode:
+                    self.data.numpadmode = False
+                else:
+                    self.data.numpadmode = True
+
+            elif event.keysym == "t":
+                self.needs_second_input = "throw"
+                self.data.no_move = True
+                self.labeltext += "in which direction do you want to throw {}".format(
+                    self.data.itemList[self.data.selItem].name)
+
+            elif event.keysym_num == 73:  # I
+                for i in self.data.staticObjects:
+                    if i.pos == self.data.player.pos:
+                        i.use(self)
+
+            for i in range(0, 3):
+                for j in range(0, 3):
+                    if self.data.numpadmode:
+                        if event.keysym == self.data.numpad[i][j]:
+                            self.data.player.move([i - 1, j - 1], self.data)
+                    else:
+                        if event.keysym == self.data.keypad[i][j] and event.state == 0x0000:
+                            self.data.player.move([i - 1, j - 1], self.data)
+
+            if self.data.player.hp < 1:
+                logging.info("player died.")
+                self.labeltext += "Game Over\nyou died."
+                self.label.configure(bg="#ea2222")
+                self.finish()
+
+        else:  # second inputs
+            if self.needs_second_input == "throw":
+                for i in range(0, 3):
+                    for j in range(0, 3):
+                        if self.data.numpadmode:
+                            if event.keysym == self.data.numpad[i][j]:
+                                self.data.itemList[self.data.selItem].throw(self.data, [i - 1, j - 1])
+                        else:
+                            if event.keysym == self.data.keypad[i][j] and event.state == 0x0000:
+                                self.data.itemList[self.data.selItem].throw(self.data, [i - 1, j - 1])
+
+            self.needs_second_input = None
+
+        if not self.data.no_move:
+            self.data.move += 1
+            for i in self.data.ents:
+                if i.playerMove:
+                    i.move(self.data)
+            self.data.player.saturation -= 1
+            self.data.player.water -= 1
 
         for i in self.data.ents:
             if i.hp < 1:
                 self.data.ents.remove(i)
-
-        if self.data.player.hp < 1:
-            logging.info("player died.")
-            self.labeltext += "Game Over\nyou died."
-            self.label.configure(bg="#ea2222")
-            self.finish()
 
         for i in self.data.groundItems:
             if i.pickupDelay > 0:
@@ -363,21 +393,13 @@ class Game(tk.Frame):
         for i in self.data.staticObjects:
             if self.data.player.pos == i.pos:
                 i.onPlayerMovesOnMe(self)
-                if i.id == "stair" and ((i.variant == "down" and event.keysym == "greater") or (i.variant == "up" and event.keysym == "less")):
+                if i.id == "stair" and ((i.variant == "down" and event.keysym == "greater") or (
+                        i.variant == "up" and event.keysym == "less")):
                     i.on_player_walks_me(self)
                 elif i.messages:
                     if "You see here: " not in self.labeltext:
                         self.labeltext += "You see here: "
                     self.labeltext += i.get_label_text()
-
-        if not self.data.no_move:
-            self.data.move += 1
-            for i in self.data.ents:
-                if i.playerMove:
-                    i.move(self.data)
-
-        self.data.player.saturation -= 1
-        self.data.player.water -= 1
 
         self.label.configure(text=self.labeltext)
         self.draw()
@@ -400,6 +422,7 @@ class GameDataHolder:
 
         self.groundItems = []
         self.ents = []
+        self.staticObjects = []
 
         self.tagRegistry = TagRegistry(self)
         self.entRegistry = None
@@ -417,8 +440,6 @@ class GameDataHolder:
 
         self.player = Player()
         self.tagRegistry.add("green", "#008800")
-
-        self.staticObjects = []
 
         self.registry_setup()
 
@@ -450,12 +471,12 @@ class GameDataHolder:
         self.selItem = 0
 
     def entity_creation(self):
-        self.spawn_entity_creation()
+        self.spawn_entities()
         for i in self.ents:
             if i.requiresPostProcesses:
                 i.postProcess(self)
 
-    def spawn_entity_creation(self):
+    def spawn_entities(self):
         enttypes = []
         enttypes.extend(self.itemRegistry.getItems())
         enttypes.extend(self.entRegistry.getEnts())
@@ -494,7 +515,7 @@ class GameDataHolder:
 
         for i in range(random.randint(1, 3)):
             self.rooms.append(Room(
-                [random.randint(2, 20), random.randint(2, 55)]))
+                [random.randint(2, 25), random.randint(2, 55)]))
 
         self.staticObjects = []
 
@@ -513,6 +534,7 @@ class GameDataHolder:
             self.game.append(line)
 
         self.entity_creation()
+        self.static_object_creation()
         self.player.random_position_next_wall(self)
 
     def position_in_world(self, pos):
@@ -522,16 +544,16 @@ class GameDataHolder:
         return False
 
     def position_on_wall(self, pos):
-        r = None
+        direction = None
         position_in_room = False
-        for i in self.rooms:
-            if i.position_in_room(pos):
+        for room in self.rooms:
+            if room.position_in_room(pos):
                 position_in_room = True
-                r = None
-            j = i.position_on_wall(pos)
-            if j is not None and not position_in_room:
-                r = j
-        return r
+                direction = None
+            on_wall = room.position_on_wall(pos)
+            if on_wall is not None and not position_in_room:
+                direction = on_wall
+        return direction
 
 
 class TagRegistry:
@@ -553,7 +575,7 @@ class TagRegistry:
 class Room:
     def __init__(self, pos):
         self.upper = pos[0]
-        self.left = pos[0]
+        self.left = pos[1]
 
         self.lower = random.randint(self.upper + 2, 28)
         self.right = random.randint(self.left + 2, 58)
@@ -606,6 +628,8 @@ class Player:
     def reset_stats(self):
         self.saturation = 5000
         self.water = 1000
+        self.hp = 50
+        self.max_hp = 50
 
     def move(self, direction, data):
         self.statuslist = []
@@ -645,13 +669,14 @@ class Player:
 
         if self.saturation > 10000:
             self.statuslist.append("Saturated")
-        elif 200 < self.saturation < 2000:
+        elif 750 < self.saturation < 2000:
             self.statuslist.append("Hungry")
         elif 0 < self.saturation <= 750:
             self.statuslist.append("Weak")
         elif self.saturation <= 0:
             if self.saturation < data.level * 50:
                 self.statuslist.append("Biting dust")
+                self.hp = 0
             else:
                 self.statuslist.append("Fainting")
 
@@ -671,7 +696,7 @@ class Player:
     def random_position_next_wall(self, data):
         self.pos = []
         while not self.pos:
-            pos = [random.randint(5, 25), random.randint(5, 45)]
+            pos = [random.randint(2, 27), random.randint(2, 58)]
             s = data.position_on_wall(pos)
             doorpos = pos
             player_position = pos

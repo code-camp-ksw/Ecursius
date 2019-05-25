@@ -14,9 +14,11 @@ class Cat(base.Entity):
     def move(self, data):
         prevpos = []
         base.copyList(prevpos, self.pos)
-        direction = pathfinder.moveToNearestOfList(self.pos, data.groundItems, data)
-        if direction == [0, 0] and not data.groundItems:
-            direction = pathfinder.normalMoveDir(self.pos, data.player.pos, data)
+        direction = pathfinder.move_to_nearest_of_list(self.pos, data.groundItems, data)
+        print(direction)
+        if direction == [0, 0] and len(data.groundItems) == 0:
+            direction = pathfinder.normal_moving_direction(self.pos, data.player.pos, data)
+        print(direction)
         self.pos = [int(self.pos[0] + direction[0]), int(self.pos[1] + direction[1])]
         for i in data.ents:
             if self.pos == i.pos:

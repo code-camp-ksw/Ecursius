@@ -16,6 +16,7 @@ class Item:
         self.base_price = 100
         self.already_known = False
         self.color_tag = None
+        self.throwable_distance = 3
 
     def set_position(self, y, x):
         self.pos = [int(y), int(x)]
@@ -44,6 +45,31 @@ class Item:
     def set_name(self, data):
         self.name = data.NameRegistry.request_name(self.id, self.type)
 
+    def throw(self, data, direction):  # direction: [y, x]
+        self.inInventory = False
+        data.itemList.remove(self)
+        if data.selItem != 0:
+            data.selItem -= 1
+        data.groundItems.append(self)
+        self.pos = data.player.pos[:]
+        landed = False
+        for i in range(3):
+            if not landed:
+                prevpos = self.pos[:]
+                self.pos[0] += direction[0]
+                self.pos[1] += direction[1]
+                if data.position_in_world(self.pos):
+                    for i in data.ents:
+                        if i.pos == self.pos:
+                            self.lands_on_entity(i, data)
+                            landed = True
+                else:
+                    self.pos = prevpos
+                    landed = True
+
+    def lands_on_entity(self, entity, data):
+        pass
+
     @staticmethod
     def get_probability(data):
         return 1
@@ -69,6 +95,7 @@ class Food(Item):
     def use_item(self, data, player):
         player.water += self.water
         player.saturation += self.saturation
+        self.durability -= 1
 
         if self.durability == 0:
             del data.itemList[data.selItem]
@@ -93,6 +120,7 @@ class Drink(Item):
     def use_item(self, data, player):
         player.water += self.water
         player.saturation += self.saturation
+        self.durability -= 1
 
         if self.durability == 0:
             del data.itemList[data.selItem]

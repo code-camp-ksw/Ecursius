@@ -18,10 +18,10 @@ class Ents():
 
     def genEnts(self):
         self.entList = []
-        self.appendToEntlist(rock.Rock, 3)
-        self.appendToEntlist(firering.FireRing, 2)
-        self.appendToEntlist(orc.Orc, 2)
-        self.appendToEntlist(cat.Cat, 1)
+        self.appendToEntlist(rock.Rock, 4)
+        self.appendToEntlist(firering.FireRing, 4)
+        self.appendToEntlist(orc.Orc, 3)
+        self.appendToEntlist(cat.Cat, 2)
 
     def getEnts(self):
         self.genEnts()

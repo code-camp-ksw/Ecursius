@@ -22,7 +22,7 @@ class Items:
     def genItems(self):
         self.ItemList = []
         # adds to entities which are possible: class object, weight
-        self.appendToItemlist(poison.PoisonPotion, 2)
+        self.appendToItemlist(poison.PoisonPotion, poison.PoisonPotion.get_probability(self.data))
         self.appendToItemlist(sword.Sword, 2)
         self.appendToItemlist(telepotion.TelePotion, 2)
         self.appendToItemlist(pickaxe.Pickaxe, pickaxe.Pickaxe.get_probability(self.data))
