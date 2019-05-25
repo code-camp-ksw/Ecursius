@@ -311,7 +311,6 @@ class Game(tk.Frame):
 
             elif event.keysym == "f":
                 self.data.generate_map()
-                self.data.player.random_position(self.data)
                 logging.info("generating new game, ")
 
             elif event.keysym == "z":
@@ -348,7 +347,7 @@ class Game(tk.Frame):
                         if event.keysym == self.data.numpad[i][j]:
                             self.data.player.move([i - 1, j - 1], self.data)
                     else:
-                        if event.keysym == self.data.keypad[i][j] and event.state == 0x0000:
+                        if event.keysym == self.data.keypad[i][j] and event.state & 0x0001 == 0:
                             self.data.player.move([i - 1, j - 1], self.data)
 
             if self.data.player.hp < 1:
@@ -685,13 +684,6 @@ class Player:
             data.itemList[data.selItem].groundAttack(data, self)
         elif data.itemList:
             data.itemList[data.selItem].directionAttack(data, direction, self)
-
-    def random_position(self, data):
-        self.pos = []
-        while not self.pos:
-            pos = [random.randint(5, 25), random.randint(5, 45)]
-            if data.position_in_world(pos):
-                self.set_position(pos[0], pos[1])
 
     def random_position_next_wall(self, data):
         self.pos = []

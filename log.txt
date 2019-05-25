@@ -7,6 +7,7 @@ DEBUG:PIL.PngImagePlugin:STREAM b'tIME' 80 7
 DEBUG:PIL.PngImagePlugin:b'tIME' 80 7 (unknown)
 DEBUG:PIL.PngImagePlugin:STREAM b'iTXt' 99 29
 DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 140 3117
+DEBUG:root:[23, 41]
 INFO:root:game closed
-INFO:root:points:		0
+INFO:root:points:		19
 INFO:root:maxlevel:		-1
