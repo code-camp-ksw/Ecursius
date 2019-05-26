@@ -14,8 +14,9 @@ class Orc(base.Entity):
     def move(self, data):
         if data.move % self.movetime == 0 and pathfinder.calc_distance(self.pos, data.player.pos) <= 10:
             prevpos = self.pos[:]
-            direction = pathfinder.normal_moving_direction(self.pos, data.player.pos, data)
-            self.pos = [int(self.pos[0] + direction[0]), int(self.pos[1] + direction[1])]
+            direction = pathfinder.a_star(data, self.pos, data.player.pos)
+            if direction != [0, 0] and len(direction) > 1:
+                self.pos = list(direction[1])
             for i in data.ents:
                 if i is not self and self.pos == i.pos:
                     self.pos = prevpos

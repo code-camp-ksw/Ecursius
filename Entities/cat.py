@@ -12,19 +12,19 @@ class Cat(base.Entity):
         self.strength = random.randint(3, 8)
 
     def move(self, data):
-        prevpos = []
-        base.copyList(prevpos, self.pos)
+        prevpos = self.pos[:]
         direction = pathfinder.move_to_nearest_of_list(self.pos, data.groundItems, data)
         if direction == [0, 0] and len(data.groundItems) == 0:
-            direction = pathfinder.normal_moving_direction(self.pos, data.player.pos, data)
-        self.pos = [int(self.pos[0] + direction[0]), int(self.pos[1] + direction[1])]
+            direction = pathfinder.a_star(data, self.pos, data.player.pos)
+        if direction != [0, 0] and len(direction) > 1:
+            self.pos = list(direction[1])
         for i in data.ents:
-            if self.pos == i.pos:
-                base.copyList(self.pos, prevpos)
+            if i is not self and self.pos == i.pos:
+                self.pos = prevpos
 
         if self.pos == data.player.pos:
             data.player.get_attacked(self.strength)
-            self.pos = prevpos[:]
+            self.pos = prevpos
 
     def __call__(self, data):
         return Cat(data)

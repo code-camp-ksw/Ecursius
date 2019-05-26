@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import tkinter as tk
-from tkinter import font
 import os
 import logging
 import random
@@ -12,7 +11,7 @@ from Items import itemRegistry, NameRegistry, FoodRegistry
 from Objects import objectRegistry, door
 
 
-class Window(tk.Tk):
+class Window(tk.Tk):  # main window, never visible but manages the others
     def __init__(self):
         super().__init__()
         self.game = Game(master=self)
@@ -26,7 +25,7 @@ class Window(tk.Tk):
         self.quit()
 
     def start_game(self):
-        self.menu.pack_forget()
+        self.menu.pack_forget()  # "show" the other window
         self.game.pack()
         self.game.start()
 
@@ -35,7 +34,7 @@ class Window(tk.Tk):
         self.pack_propagate(0)
         self.settings.pack()
 
-    def open_help(self):
+    def open_help(self):  # if help exists: show it, else: create new (when window was closed)
         if self.help is None:
             self.help = Help(master=self)
         else:
@@ -46,7 +45,6 @@ class Help(tk.Toplevel):
     def __init__(self, master=None):
         super().__init__(master)
         self.mode = tk.Menu(self, relief=tk.FLAT)
-        # self.mode.add_command(label="hide", command=self.withdraw)
         self.mode.add_command(label="Buttons", command=self.show_button_text)
         self.config(menu=self.mode)
         self.text = tk.Label(self, width=40, anchor=tk.NW, justify=tk.LEFT, bg="#efefef")
@@ -55,9 +53,11 @@ class Help(tk.Toplevel):
         self.protocol("WM_DELETE_WINDOW", self.on_close)
 
     def show_button_text(self):
-        self.text.configure(text="""    uio\tkeypad to move/attack
-    jkl\telse: numpad
+        self.text.configure(text="""  button   definition
+    uio\tuse this keypad to move/attack
+    jkl\telse you could use the numpad
     m,.\tswitch mode with F1
+    
     >\tmove up stair (↗)
     <\tmove down stair (↘)
     
@@ -68,10 +68,10 @@ class Help(tk.Toplevel):
     z\topen/close inventory
     -\tdrop selected item
     n\tpick up Item
-    I\tinteract
+<shift>i\tinteract
     """)
 
-    def on_close(self):
+    def on_close(self):  # so it correctly destroys itself and removes itself from master
         self.master.help = None
         print(self.master.help)
         self.destroy()
@@ -109,6 +109,7 @@ class Menu(tk.Frame):
         self.background = ImageTk.PhotoImage(Image.open("Menu.png"))
         self.background_label = tk.Label(self, image=self.background)
         self.background_label.place(relx=0.5, rely=0.5, relwidth=1, relheight=1, anchor=tk.CENTER)
+
         self.start_button = tk.Button(self, text="START!", command=master.start_game, anchor=tk.CENTER, relief=tk.FLAT)
         self.start_button.grid(row=0, column=1, pady=(150, 10))
         self.settings_button = tk.Button(self, text="Settings", command=master.open_settings, anchor=tk.CENTER, relief=tk.FLAT)
@@ -125,17 +126,14 @@ class Game(tk.Frame):
         self.running = False
         self.master.title("Ecursius")
         self.master.configure(bg="#eaeaea")
-        self.map_font = font.Font(family="Bitstream Vera Sans Mono", size=11)
         self.map = tk.Text(self, width=60, height=30, bg="#eaeaea", font="TkFixedFont", relief=tk.FLAT)
-        # self.map = tk.Canvas(self, width=760, height=512, bg="#eaeaea")
-        self.fields = []
-        self.expire_turns = 1
+        self.expire_turns = 1  # the label shows some text for multiple rounds
         self.itemscore = tk.Label(self, height=30, width=35, bg="#eaeaea", anchor=tk.NW, justify=tk.LEFT)
         self.stats = tk.Label(self, height=3, bg="#eaeaea")
         self.label = tk.Label(self, height=5, bg="#eaeaea", width=130)
         self.separator = tk.Label(self, height=30, text="", bg="#eaeaea")
 
-        self.needs_second_input = None
+        self.needs_second_input = None  # for two-inputs like throw
 
         t = "|"
         for i in range(29):
@@ -157,9 +155,9 @@ class Game(tk.Frame):
         self.pack_forget()
         self.master.menu.pack()
 
-    def write_to_label(self, text, expires=False):
+    def write_to_label(self, text, expires=False):  # set expires to the turns it lasts
         self.label.configure(text=text)
-        if expires == False:
+        if not expires:
             self.expire_turns = -1
         else:
             self.expire_turns = expires
@@ -185,7 +183,7 @@ class Game(tk.Frame):
         self.after(10, func=self.entity_automove)
 
     def draw(self):
-        screen = []
+        screen = []  # redraw map
         for i in range(len(self.data.game)):
             line = []
             for j in self.data.game[i]:
@@ -204,13 +202,15 @@ class Game(tk.Frame):
 
         screen[self.data.player.pos[0]][self.data.player.pos[1]] = "@"
 
-        for i in range(len(screen)):
+        for i in range(len(screen)):  # join map
             screen[i] = "".join(screen[i])
 
-        self.map["state"] = tk.NORMAL
+        self.map["state"] = tk.NORMAL  # enable editing
 
-        self.map.delete("@0,0", tk.END)  # everything
+        self.map.delete("@0,0", tk.END)  # delete everything
         self.map.insert("@0,0", "\n".join(screen))  # redraw
+
+        # now comes the color
 
         self.map.tag_add("green", "{}.{}".format(self.data.player.pos[0] + 1, self.data.player.pos[1]))
 
@@ -218,15 +218,24 @@ class Game(tk.Frame):
             if i.color_tag is not None:
                 self.map.tag_add(i.color_tag, "{}.{}".format(i.pos[0] + 1, i.pos[1]))
 
-        self.map["state"] = tk.DISABLED
+        for i in self.data.ents:
+            if i.color_tag is not None:
+                self.map.tag_add(i.color_tag, "{}.{}".format(i.pos[0] + 1, i.pos[1]))
 
-        self.draw_stats()
+        for i in self.data.staticObjects:
+            if i.color_tag is not None:
+                self.map.tag_add(i.color_tag, "{}.{}".format(i.pos[0] + 1, i.pos[1]))
+
+        self.map["state"] = tk.DISABLED  # disables cursor
+
+        self.draw_stats()  # draw the rest of the UI
         self.draw_itemscore()
 
     def draw_stats(self):
         new_text = "~" * 95
         new_text += "\n"
-        new_text += "health: {}/{}\tgold: {}\t{}".format(self.data.player.hp, self.data.player.max_hp, self.data.player.gold, ", ".join(self.data.player.statuslist))
+        new_text += "health: {}/{}\tgold: {}\t{}".format(self.data.player.hp, self.data.player.max_hp,
+                                                         self.data.player.gold, ", ".join(self.data.player.statuslist))
         new_text += "\n"
         new_text += "score: {}\tlevel: {}\tdeepest level: {}".format(
             self.data.score, self.data.level, self.data.maxLevel)
@@ -252,7 +261,7 @@ class Game(tk.Frame):
 
     def start(self):
         self.running = True
-        self.unbind_all("<KeyPress-q>")
+        self.unbind_all("<KeyPress-q>")  # no overlapping input handler
         self.bind_all("<KeyPress>", func=self.input_handler)
         self.data.reset_inventory()
         self.data.generate_map()
@@ -341,7 +350,7 @@ class Game(tk.Frame):
                     if i.pos == self.data.player.pos:
                         i.use(self)
 
-            for i in range(0, 3):
+            for i in range(0, 3):  # movement keys
                 for j in range(0, 3):
                     if self.data.numpadmode:
                         if event.keysym == self.data.numpad[i][j]:
@@ -369,7 +378,7 @@ class Game(tk.Frame):
 
             self.needs_second_input = None
 
-        if not self.data.no_move:
+        if not self.data.no_move:  # move ents, remove ents, manage items & static objects
             self.data.move += 1
             for i in self.data.ents:
                 if i.playerMove:
@@ -427,7 +436,7 @@ class GameDataHolder:
         self.entRegistry = None
         self.itemRegistry = None
         self.objectRegistry = None
-        self.NameRegistry = None
+        self.NameRegistry = None  # doesn't get reset when restarting, needs fixing
         self.FoodRegistry = None
 
         self.rooms = []
@@ -456,7 +465,7 @@ class GameDataHolder:
                 if i.name == i.identified_name:
                     i.identified = True
 
-    def get_needed_inv_sides(self):
+    def get_needed_inv_sides(self):  # calculate the needed amount of inventory sides
         i = 0
         while i * 30 <= len(self.itemList):
             i += 1
@@ -469,7 +478,7 @@ class GameDataHolder:
         self.showInventory = True
         self.selItem = 0
 
-    def entity_creation(self):
+    def entity_creation(self):  # makes sure that postProcess gets called later
         self.spawn_entities()
         for i in self.ents:
             if i.requiresPostProcesses:
@@ -536,13 +545,13 @@ class GameDataHolder:
         self.static_object_creation()
         self.player.random_position_next_wall(self)
 
-    def position_in_world(self, pos):
+    def position_in_world(self, pos):  # checks if the position is in any room
         for i in self.rooms:
             if i.position_in_room(pos):
                 return True
         return False
 
-    def position_on_wall(self, pos):
+    def position_on_wall(self, pos):  # checks if the position is on a wall
         direction = None
         position_in_room = False
         for room in self.rooms:
@@ -555,7 +564,7 @@ class GameDataHolder:
         return direction
 
 
-class TagRegistry:
+class TagRegistry:  # registers color tags
     def __init__(self, data):
         self.colors = {}
         self.updated_tags = []
@@ -589,7 +598,7 @@ class Room:
 
         return False
 
-    def position_on_wall(self, pos):
+    def position_on_wall(self, pos):  # used for doors because I'm too lazy to remove it
         if self.upper == pos[0] and self.left <= pos[1] <= self.right:
             return "upper"
         elif self.lower == pos[0] and self.left <= pos[1] <= self.right:
@@ -629,6 +638,8 @@ class Player:
         self.water = 1000
         self.hp = 50
         self.max_hp = 50
+        self.gold = 0
+        self.experience = 0
 
     def move(self, direction, data):
         self.statuslist = []
@@ -684,6 +695,13 @@ class Player:
             data.itemList[data.selItem].groundAttack(data, self)
         elif data.itemList:
             data.itemList[data.selItem].directionAttack(data, direction, self)
+
+    def random_position(self, data):
+        self.pos = []
+        while not self.pos:
+            pos = [random.randint(1, 28), random.randint(1, 58)]
+            if data.position_in_world(pos):
+                self.pos = pos
 
     def random_position_next_wall(self, data):
         self.pos = []
