@@ -1,8 +1,9 @@
-from . import sword, telepotion, pickaxe, healthpotion, gold, poison, greater_health_potion, waterbottle, slimeMold
+from . import sword, telepotion, pickaxe, healthpotion, gold, poison, greater_health_potion, waterbottle, slimeMold, \
+    fish
 
 item_list = [sword.Sword, telepotion.TelePotion, pickaxe.Pickaxe, healthpotion.HealthPotion, gold.Gold,
              poison.PoisonPotion, greater_health_potion.GreaterHealthPotion, waterbottle.WaterBottle,
-             slimeMold.SlimeMold]
+             slimeMold.SlimeMold, fish.Fish]
 
 
 class Items:
@@ -31,6 +32,7 @@ class Items:
         self.appendToItemlist(greater_health_potion.GreaterHealthPotion, greater_health_potion.GreaterHealthPotion.get_probability(self.data))
         self.appendToItemlist(waterbottle.WaterBottle, waterbottle.WaterBottle.get_probability(self.data))
         self.appendToItemlist(slimeMold.SlimeMold, slimeMold.SlimeMold.get_probability(self.data))
+        self.appendToItemlist(fish.Fish, fish.Fish.get_probability(self.data))
 
     def getItems(self):
         self.genItems()

@@ -13,7 +13,15 @@ class Cat(base.Entity):
 
     def move(self, data):
         prevpos = self.pos[:]
-        direction = pathfinder.move_to_nearest_of_list(self.pos, data.groundItems, data)
+        target = None
+        for i in data.groundItems:
+            if i.id == "fish":
+                target = i
+        if target is not None:
+            direction = pathfinder.a_star(data, self.pos, target.pos, diagonal_allowed=True)
+            print(direction)
+        else:
+            direction = pathfinder.move_to_nearest_of_list(self.pos, data.groundItems, data)
         if direction == [0, 0] and len(data.groundItems) == 0:
             direction = pathfinder.a_star(data, self.pos, data.player.pos)
         if direction != [0, 0] and len(direction) > 1:
@@ -23,7 +31,7 @@ class Cat(base.Entity):
                 self.pos = prevpos
 
         if self.pos == data.player.pos:
-            data.player.get_attacked(self.strength)
+            data.player.get_attacked(data, self.strength, self)
             self.pos = prevpos
 
     def __call__(self, data):

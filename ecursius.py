@@ -263,6 +263,9 @@ class Game(tk.Frame):
         self.running = True
         self.unbind_all("<KeyPress-q>")  # no overlapping input handler
         self.bind_all("<KeyPress>", func=self.input_handler)
+        self.data.score = 0
+        self.data.maxLevel = -1
+        self.data.level = -1
         self.data.reset_inventory()
         self.data.generate_map()
         self.data.player.reset_stats()
@@ -298,21 +301,25 @@ class Game(tk.Frame):
                 self.data.selItem -= 1
                 if self.data.selItem < 0:
                     self.data.selItem = len(self.data.itemList) - 1
+                self.data.no_move = True
 
             elif event.keysym == "s":
                 self.data.selItem += 1
                 if self.data.selItem > len(self.data.itemList) - 1:
                     self.data.selItem = 0
+                self.data.no_move = True
 
             elif event.keysym == "a":
                 self.data.inventorySide -= 1
                 if self.data.inventorySide < 0:
                     self.data.inventorySide = self.data.get_needed_inv_sides() - 1
+                self.data.no_move = True
 
             elif event.keysym == "d":
                 self.data.inventorySide += 1
                 if self.data.inventorySide >= self.data.get_needed_inv_sides():
                     self.data.inventorySide = 0
+                self.data.no_move = True
 
             elif event.keysym == "minus":
                 if self.data.itemList:
@@ -629,9 +636,11 @@ class Player:
     def set_position(self, posy, posx):
         self.pos = [int(posy), int(posx)]
 
-    def get_attacked(self, damage):
+    def get_attacked(self, data, damage, attacker):
         if not self.invulnerable:
             self.hp -= damage
+        if attacker is not None and data.itemList[data.selItem].type == "sword":
+            attacker.hp -= data.itemList[data.selItem].damage // 2
 
     def reset_stats(self):
         self.saturation = 5000

@@ -23,7 +23,7 @@ class VendingMachine(base.Object):
         elif self.variant == "drinks":
             self.recipe.append(data.FoodRegistry.get_random_drink(1).__next__()(data))
             self.recipe.append(self.recipe[0].base_price +
-                               random.randint(int(self.recipe[0].base_price * 0.2), int(self.recipe[0].base_price * 0.8)))
+                               random.randint(int(self.recipe[0].base_price * 0.2 * -data.level), int(self.recipe[0].base_price * 0.8 * -data.level)))
 
     def use(self, app):
         if app.data.player.gold >= self.recipe[1]:

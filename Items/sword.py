@@ -28,5 +28,12 @@ class Sword(base.Item):
                     if data.selItem == len(data.itemList) and data.selItem != 0:
                         data.selItem -= 1
 
+    def lands_on_entity(self, entity, data):
+        self.durability -= 5
+        entity.hp -= self.damage //2
+        if self.durability <= 0:
+            data.groundItems.remove(self)
+            del self
+
     def __call__(self, data):
         return Sword(data)

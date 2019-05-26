@@ -7,7 +7,7 @@ class GreaterHealthPotion(base.Item):
         super().__init__("greater_health_potion")
         self.type = "potion"
         self.random_position(data, 4)
-        self.identified_name = "Greater healing potion"
+        self.identified_name = "Greater health potion"
         self.durability = random.randint(1, 3)
         self.strength = random.randint(15, 25)
 

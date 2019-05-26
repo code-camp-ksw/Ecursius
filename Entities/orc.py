@@ -22,6 +22,6 @@ class Orc(base.Entity):
                     self.pos = prevpos
 
             if self.pos == data.player.pos:
-                data.player.get_attacked(5)
+                data.player.get_attacked(data, 5, self)
                 self.pos = prevpos
 

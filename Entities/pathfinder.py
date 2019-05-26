@@ -45,7 +45,7 @@ def a_star(data, pos1, pos2, diagonal_allowed=False, above_ents=False):  # A* al
             for i in open_nodes:
                 if i == pos2:
                     return __reconstruct_path(came_from, tuple(i))
-                if fscore[tuple(i)] < fscore[tuple(lowest_node)]:
+                elif fscore[tuple(i)] < fscore[tuple(lowest_node)]:
                     lowest_node = i
 
             open_nodes.remove(lowest_node)
@@ -55,7 +55,7 @@ def a_star(data, pos1, pos2, diagonal_allowed=False, above_ents=False):  # A* al
                 if i not in closed_nodes:
                     new_score = gscore[tuple(lowest_node)] + 1
 
-                    if new_score < gscore or i not in open_nodes:
+                    if i not in open_nodes or new_score < gscore[tuple(i)]:
                         came_from[tuple(i)] = tuple(lowest_node)
                         gscore[tuple(i)] = new_score
                         fscore[tuple(i)] = new_score + __h_diagonal(i, pos2)
@@ -93,8 +93,8 @@ def a_star(data, pos1, pos2, diagonal_allowed=False, above_ents=False):  # A* al
 
 
 def __neighbours_diagonally(data, pos, above_ents=False):
-    xrange = [pos[0] - 1, pos[0] + 2]
-    yrange = [pos[1] - 1, pos[1] + 2]
+    xrange = [pos[1] - 1, pos[1] + 2]
+    yrange = [pos[0] - 1, pos[0] + 2]
     for i in range(yrange[0], yrange[1]):
         for j in range(xrange[0], xrange[1]):
             if not (i == pos[0] and j == pos[1]) and allowed_position([i, j], data, above_ents):
@@ -113,7 +113,7 @@ def __neighbours_orthogonally(data, pos, above_ents=False):
 
 
 def __reconstruct_path(came_from, current):
-    path = []
+    path = [current]
     while current in came_from.keys():
         current = came_from[current]
         path.append(current)

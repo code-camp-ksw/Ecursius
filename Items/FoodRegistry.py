@@ -1,4 +1,4 @@
-from . import base, slimeMold, waterbottle
+from . import base, slimeMold, waterbottle, fish
 import random
 
 
@@ -14,6 +14,7 @@ class FoodRegistry:
 
     def gen_food_list(self):
         self.add_to_list(self.food, slimeMold.SlimeMold, slimeMold.SlimeMold.get_probability(self.data))
+        self.add_to_list(self.food, fish.Fish, fish.Fish.get_probability(self.data))
 
     def gen_drink_list(self):
         self.add_to_list(self.drinks, waterbottle.WaterBottle, waterbottle.WaterBottle.get_probability(self.data))

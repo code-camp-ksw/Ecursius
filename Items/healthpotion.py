@@ -4,10 +4,10 @@ import random
 
 class HealthPotion(base.Item):
     def __init__(self, data):
-        base.Item.__init__(self, "healing potion")
+        base.Item.__init__(self, "health potion")
         self.type = "potion"
         self.random_position(data, 4)
-        self.identified_name = "Healing potion"
+        self.identified_name = "Health potion"
         self.durability = random.randint(2, 5)
         self.strength = random.randint(3, 10)
 
